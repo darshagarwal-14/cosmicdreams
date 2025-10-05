@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Cosmic Dreams</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#07081a;
+    --bg2:#0a0f2a;
+    --panel:#0f1540;
+    --card:#121a52;
+    --ink:#e9ecff;
+    --muted:#9aa6d7;
+    --accent:#7bf0ff;
+    --accent2:#ffd166;
+    --accent3:#ff7bc8;
+    --ok:#26e8a6;
+    --warn:#f6b93b;
+    --bad:#ff5a5a;
+    --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background: radial-gradient(1200px 600px at 20% -10%, rgba(123,240,255,0.15), transparent),
+                        radial-gradient(1000px 500px at 80% 0%, rgba(255,123,200,0.12), transparent),
+                        linear-gradient(180deg, var(--bg), var(--bg2) 50%, var(--bg) 100%);
+    color:var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    line-height:1.6; overflow-x:hidden;
+  }
+
+  /* Animated starfield */
+  .stars, .twinkles{
+    position: fixed; inset:0; pointer-events:none; z-index:0;
+    background-repeat:repeat; background-size: contain; opacity:0.35;
+    animation: drift 120s linear infinite;
+  }
+  .twinkles{ opacity:0.2; animation-duration: 180s; mix-blend-mode: screen;}
+  @keyframes drift { from{transform:translateY(0)} to{transform:translateY(-800px)} }
+
+  /* Top nav */
+  header{
+    position:sticky; top:0; z-index:20; backdrop-filter: blur(10px);
+    background: linear-gradient(180deg, rgba(10,15,42,0.85), rgba(10,15,42,0.35));
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .nav{
+    max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:0.3px;
+  }
+  .pulse{width:10px;height:10px;border-radius:50%; background: conic-gradient(from 0deg, var(--accent), var(--accent3), var(--accent2), var(--accent));
+    box-shadow:0 0 14px rgba(123,240,255,0.8); animation: spin 4s linear infinite;}
+  @keyframes spin {to{transform:rotate(1turn)}}
+  nav a{
+    color:var(--ink); text-decoration:none; margin:0 8px; padding:8px 10px; border-radius:10px; font-weight:600;
+    transition: all .25s ease;
+  }
+  nav a.active, nav a:hover{ background:linear-gradient(90deg, rgba(123,240,255,0.15), rgba(255,123,200,0.15)); border:1px solid rgba(255,255,255,0.12) }
+
+  /* Page shells with transitions */
+  .page{display:none; opacity:0; transform:translateY(8px); transition: opacity .35s ease, transform .35s ease; position:relative; z-index:1;}
+  .page.show{display:block; opacity:1; transform:translateY(0)}
+  .wrap{max-width:1200px; margin:0 auto; padding:24px 18px}
+  .hero{
+    display:grid; grid-template-columns:1.2fr 1fr; gap:18px; align-items:center;
+  }
+  .glass{
+    background: linear-gradient(180deg, rgba(18,26,82,0.9), rgba(18,26,82,0.55));
+    border:1px solid rgba(255,255,255,0.08); border-radius:18px; box-shadow: var(--shadow);
+  }
+  .pad{padding:18px}
+  .title{font-size:36px; margin:0 0 8px 0}
+  .subtitle{color:var(--muted); margin:6px 0 0 0}
+  .cta{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
+  .btn{
+    background:linear-gradient(90deg, #1e88e5, #00acc1); border:none; color:white; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700;
+    box-shadow: 0 6px 16px rgba(0,172,193,0.35); transition: transform .1s ease;
+  }
+  .btn.secondary{
+    background:linear-gradient(90deg, #ff7bc8, #ffd166); color:#1b103a;
+  }
+  .btn:active{ transform: translateY(1px) }
+
+  /* Cards, grids */
+  .grid{display:grid; gap:14px}
+  @media(min-width:960px){ .grid.col2{grid-template-columns:1fr 1fr} .grid.col3{grid-template-columns:1fr 1fr 1fr}}
+  .card{background:var(--card); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:14px; box-shadow: var(--shadow)}
+  h2{font-size:22px; margin:0 0 8px 0; color:var(--accent)}
+  h3{font-size:16px; margin:10px 0 6px 0; color:var(--accent2)}
+  p{margin:6px 0}
+
+  /* Metric tiles */
+  .metrics{display:grid; gap:10px; grid-template-columns: repeat(2,1fr)}
+  .metric{background:#0c1140; border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:12px}
+  .metric h4{margin:0 0 4px 0; color:var(--muted); font-size:12px}
+  .metric .val{font-size:22px}
+  .tiny{font-size:12px; color:var(--muted)}
+
+  /* Bars and trend */
+  .bars{display:grid; gap:8px}
+  .bar{height:10px; background:#1b245d; border-radius:999px; overflow:hidden}
+  .fill{height:100%; background:linear-gradient(90deg, var(--accent), #7b9bff)}
+  .fill2{background:linear-gradient(90deg, var(--accent2), #ff7b7b)}
+
+  /* Simulator controls */
+  .controls{display:grid; gap:10px; grid-template-columns:1fr 1fr}
+  .control{background:#0c1140; border:1px solid rgba(255,255,255,0.06); padding:10px; border-radius:12px}
+  .control label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+  input[type="range"]{width:100%}
+  select, input[type="checkbox"]{width:100%}
+  .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; margin-left:6px; border:1px solid rgba(255,255,255,0.12)}
+
+  /* Route transition glow */
+  .glow{
+    position:absolute; inset:-2px; border-radius:18px; filter: blur(18px);
+    background: radial-gradient(600px 120px at 20% 0%, rgba(123,240,255,0.2), transparent),
+                radial-gradient(500px 120px at 80% 0%, rgba(255,123,200,0.2), transparent);
+    z-index:-1; opacity:0; transition: opacity .4s ease;
+  }
+  .page.show .glow{opacity:1}
+
+  /* Footer */
+  footer{border-top:1px solid rgba(255,255,255,0.08); color:var(--muted); font-size:12px; padding:14px 18px; text-align:center}
+
+  /* Decorative lines (F1‑inspired) */
+  .stripe{
+    height:4px; width:100%; border-radius:8px; margin:8px 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent3), var(--accent2));
+    animation: flow 6s linear infinite;
+    background-size: 200% 100%;
+  }
+  @keyframes flow { 0%{background-position:0 0} 100%{background-position:200% 0} }
+</style>
+</head>
+<body>
+  <!-- Light star textures (base64 tiny patterns) -->
+  <div class="stars" style="background-image: radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 80% 50%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 60% 80%, rgba(255,255,255,0.9), transparent);"></div>
+  <div class="twinkles" style="background-image: radial-gradient(1px 1px at 30% 20%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 70% 70%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 50% 40%, rgba(255,255,255,0.6), transparent);"></div>
+
+  <header>
+    <div class="nav">
+      <div class="brand"><div class="pulse"></div> Cosmic Dreams</div>
+      <nav>
+        <a href="#/" data-route="/">Home</a>
+        <a href="#/science" data-route="/science">Science</a>
+        <a href="#/simulator" data-route="/simulator">Simulator</a>
+        <a href="#/dreams" data-route="/dreams">Dreams</a>
+        <a href="#/tech" data-route="/tech">Tech</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <section id="home" class="page show">
+    <div class="glow"></div>
+    <div class="wrap">
+      <div class="hero">
+        <div class="glass pad">
+          <h1 class="title">Mapping Space Sleep & Brain Waves</h1>
+          <p class="subtitle">Explore how microgravity, lighting, noise, stress, and radiation shape sleep, REM, and EEG rhythms on the road to deep space.</p>
+          <div class="stripe"></div>
+          <div class="cta">
+            <button class="btn" onclick="go('/simulator')">Launch Simulator</button>
+            <button class="btn secondary" onclick="go('/science')">See the Science</button>
+          </div>
+        </div>
+        <div class="glass pad">
+          <h2>Live Metrics Preview</h2>
+          <div class="metrics" id="homeMetrics">
+            <div class="metric"><h4>Total Sleep Time</h4><div class="val" id="hm_tst">—</div><div class="tiny">per 24h</div></div>
+            <div class="metric"><h4>Sleep Efficiency</h4><div class="val" id="hm_eff">—</div><div class="tiny">opportunity vs achieved</div></div>
+            <div class="metric"><h4>REM Percentage</h4><div class="val" id="hm_rem">—</div><div class="tiny">of TST</div></div>
+            <div class="metric"><h4>EEG Alpha Index</h4><div class="val" id="hm_alpha">—</div><div class="tiny">vs baseline</div></div>
+          </div>
+          <p class="tiny">Preview mirrors current simulator settings for quick comparison.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCIENCE -->
+  <section id="science" class="page">
+    <div class="glow"></div>
+    <div class="wrap">
+      <div class="grid col2">
+        <div class="card">
+          <h2>Zero‑g, Light, and Sleep</h2>
+          <p>ISS crews orbit Earth every ~90 minutes and see ~16 sunrises/sunsets per day, so spectral lighting and schedule control are used to stabilize circadian entrainment and sleep timing.</p>
+          <p>Experiments like the Circadian Light synchronize spectra to individual schedules, adding red‑shifted evenings and blue‑enriched mornings to support rhythms in microgravity cabins.</p>
+        </div>
+        <div class="card">
+          <h2>Sleep Architecture in Orbit</h2>
+          <p>Long‑duration missions show shorter sleep, reduced efficiency, greater wake after sleep onset, and early‑mission reductions in both REM and NREM with signs of partial recovery by ~6 months.</p>
+          <p>REM latency can shift during flight compared with pre‑flight, underscoring the need for countermeasures and better temporal lighting strategies for sustained operations.</p>
+        </div>
+        <div class="card">
+          <h2>EEG Alpha and Networks</h2>
+          <p>Resting‑state EEG studies in astronauts indicate decreased default‑mode alpha band power and reduced functional connectivity during flight that can persist post‑landing.</p>
+          <p>These electrocerebral alterations motivate in‑flight EEG monitoring and provide markers to evaluate countermeasures during exploration missions.</p>
+        </div>
+        <div class="card">
+          <h2>Performance Links</h2>
+          <p>Shortened sleep in space is associated with degraded sustained attention, so simulators often use PVT‑like scores to visualize operational risk alongside sleep metrics.</p>
+          <p>Lighting, workload, stress, and noise interact, making multi‑factor modeling useful for mission planners and for education about sleep health off‑planet.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIMULATOR -->
+  <section id="simulator" class="page">
+    <div class="glow"></div>
+    <div class="wrap">
+      <div class="grid col2">
+        <div class="card">
+          <h2>Astronaut Sleep Simulator</h2>
+          <p class="tiny">Educational model; values are heuristic approximations inspired by published findings.</p>
+          <div class="controls">
+            <div class="control">
+              <label>Mission duration (days): <span class="pill" id="durVal">180</span></label>
+              <input type="range" id="duration" min="7" max="720" step="1" value="180"/>
+            </div>
+            <div class="control">
+              <label>Sleep opportunity (h): <span class="pill" id="oppVal">8.0</span></label>
+              <input type="range" id="opportunity" min="4" max="10" step="0.25" value="8"/>
+            </div>
+            <div class="control">
+              <label>Lighting mode</label>
+              <select id="lighting">
+                <option value="optimized">Circadian‑optimized (tunable)</option>
+                <option value="iss">ISS standard (16 sunrises/day)</option>
+                <option value="earthlike">Earth‑like schedule</option>
+              </select>
+            </div>
+            <div class="control">
+              <label>Stress level</label>
+              <input type="range" id="stress" min="0" max="100" step="1" value="35"/>
+            </div>
+            <div class="control">
+              <label>Noise level</label>
+              <input type="range" id="noise" min="0" max="100" step="1" value="30"/>
+            </div>
+            <div class="control">
+              <label>Radiation regime</label>
+              <select id="radiation">
+                <option value="none">Minimal</option>
+                <option value="leo">LEO (ISS)</option>
+                <option value="deep">Deep‑space/GCRsim</option>
+              </select>
+            </div>
+            <div class="control">
+              <label>Microgravity</label>
+              <input type="checkbox" id="microg" checked />
+            </div>
+            <div class="control">
+              <label>Workload intensity</label>
+              <input type="range" id="work" min="0" max="100" step="1" value="50"/>
+            </div>
+          </div>
+
+          <div class="grid col2" style="margin-top:10px">
+            <div class="card">
+              <h3>Sleep Architecture</h3>
+              <div class="bars">
+                <div>REM</div>
+                <div class="bar"><div class="fill" id="remBar" style="width:22%"></div></div>
+                <div>NREM</div>
+                <div class="bar"><div class="fill fill2" id="nremBar" style="width:54%"></div></div>
+                <div>Wake</div>
+                <div class="bar"><div class="fill" id="wasoBar" style="width:24%; background:#ff7b7b"></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Mission Trend (daily)</h3>
+              <canvas id="trend" width="640" height="180" style="width:100%; background:#0e1442; border-radius:12px; border:1px solid rgba(255,255,255,0.06)"></canvas>
+              <p class="tiny">Lines animate as settings change to show sleep hours and alertness trajectory.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Key Metrics</h2>
+          <div class="metrics">
+            <div class="metric"><h4>Total Sleep Time</h4><div class="val" id="tstVal">6.6 h</div><div class="tiny">avg per 24h</div></div>
+            <div class="metric"><h4>Sleep Efficiency</h4><div class="val" id="seVal">86%</div><div class="tiny">opportunity vs achieved</div></div>
+            <div class="metric"><h4>REM Percentage</h4><div class="val" id="remVal">22%</div><div class="tiny">of TST</div></div>
+            <div class="metric"><h4>REM Latency</h4><div class="val" id="remlVal">60 min</div><div class="tiny">to first REM</div></div>
+            <div class="metric"><h4>EEG Alpha Index</h4><div class="val" id="alphaVal">0.90×</div><div class="tiny">vs baseline</div></div>
+            <div class="metric"><h4>Alertness (PVT‑like)</h4><div class="val" id="pvtVal">78/100</div><div class="tiny">sustained attention proxy</div></div>
+            <div class="metric"><h4>Mood/Fatigue</h4><div class="val" id="moodVal">Moderate</div><div class="tiny">lower is better</div></div>
+            <div class="metric"><h4>Cumulative Risk</h4><div class="val" id="riskVal">Medium</div><div class="tiny">mission sleep/stress load</div></div>
+          </div>
+          <div class="stripe"></div>
+          <p class="tiny">Heuristic coefficients reflect trends reported in astronaut sleep and EEG research, not medical advice.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DREAMS -->
+  <section id="dreams" class="page">
+    <div class="glow"></div>
+    <div class="wrap">
+      <div class="grid col2">
+        <div class="card">
+          <h2>AI‑Assisted Dream Analysis</h2>
+          <p>Paste a short dream log to extract themes, keywords, and a coarse sentiment to explore stressors and coping imagery in an operational setting.</p>
+          <textarea id="dream" style="width:100%; min-height:140px; background:#0e1442; color:var(--ink); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:10px" placeholder="Example: Floating past windows, alarms beeping, searching for crew quarters..."></textarea>
+          <div style="display:flex; gap:10px; margin-top:10px">
+            <button class="btn" id="analyze">Analyze</button>
+            <div id="dreamStatus" class="tiny"></div>
+          </div>
+          <div class="card" style="margin-top:10px">
+            <h3>Insights</h3>
+            <pre id="dreamOut" style="margin:0; white-space:pre-wrap; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:12px">No analysis yet.</pre>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Why Dreams in Space</h2>
+          <p>Because REM and NREM proportions can shift in flight alongside changes in sleep efficiency and wake after sleep onset, dream content tracking may offer complementary well‑being cues.</p>
+          <p>In future, pairing dream logs with wearable or in‑cabin EEG could contextualize alpha dynamics and recovery, extending ongoing in‑flight monitoring efforts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH -->
+  <section id="tech" class="page">
+    <div class="glow"></div>
+    <div class="wrap">
+      <div class="grid col3">
+        <div class="card">
+          <h2>Circadian Lighting</h2>
+          <p>Tunable spectrum and intensity enable blue‑enriched mornings and red‑shifted evenings synchronized to crew schedules to reinforce circadian alignment in microgravity habitats.</p>
+          <p>ISS deployments demonstrate how individualized light profiles can support alertness windows and sleep consolidation when external day‑night cues are unreliable.</p>
+        </div>
+        <div class="card">
+          <h2>Noise & Vibration</h2>
+          <p>Acoustic load management and masking aim to reduce awakenings and preserve efficiency given higher wake after sleep onset observed during missions.</p>
+          <p>Designs integrate quieter fans and isolators plus adaptive soundscapes to complement light schedules for consolidated rest in crew quarters.</p>
+        </div>
+        <div class="card">
+          <h2>AI Sleep Analytics</h2>
+          <p>On‑device models can fuse actigraphy, light exposure, tasks, and optionally EEG to predict next‑day alertness and suggest dynamic lighting or schedule tweaks in real time.</p>
+          <p>These tools can track recovery of REM/NREM proportions over long missions and flag risk when sleep curtails under operational or environmental stressors.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Cosmic Dreams — concept demo for education and research prototyping.</footer>
+
+<script>
+  // Simple hash router
+  function go(path){ location.hash = '#'+path; }
+  const pages = {
+    '/': document.getElementById('home'),
+    '/science': document.getElementById('science'),
+    '/simulator': document.getElementById('simulator'),
+    '/dreams': document.getElementById('dreams'),
+    '/tech': document.getElementById('tech')
+  };
+  function route(){
+    const hash = location.hash.replace('#','') || '/';
+    document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active', a.getAttribute('data-route')===hash));
+    Object.values(pages).forEach(p=>p.classList.remove('show'));
+    (pages[hash]||pages['/']).classList.add('show');
+    if(hash==='/'){ updateHomePreview(); }
+  }
+  window.addEventListener('hashchange', route); route();
+
+  // Heuristic model parameters
+  const BASE_TST = 7.5, BASE_REM = 0.25, BASE_NREM = 0.55, BASE_REML = 90, BASE_ALPHA = 1.00, BASE_EFF = 0.90;
+  const MICROG_TST_PENALTY = 0.6, ISS_LIGHT_PENALTY = 0.5, OPT_LIGHT_RECOVERY = 0.4, EARTHLIKE_PENALTY = 0.2;
+  function stressPenaltyH(s){ return (s/100)*0.8; }
+  function noiseEffPenalty(n){ return (n/100)*0.10; }
+  const RAD = {
+    none:{tst:0, remFrac:0, alpha:0, remlShift:0},
+    leo:{tst:-0.2, remFrac:-0.05, alpha:-0.05, remlShift:-10},
+    deep:{tst:-0.5, remFrac:-0.10, alpha:-0.10, remlShift:-20}
+  };
+  const MICROG_ALPHA = 0.90;
+  function stressREML(s){ return -Math.round((s/100)*20); }
+  function pvtFromTST(t){ if(t<=4) return 35+(t-3)*20; if(t<=5) return 55+(t-4)*15; if(t<=6) return 70+(t-5)*10; if(t<=7) return 80+(t-6)*8; if(t<=8) return 88+(t-7)*8; if(t<=9) return 96+(t-8)*3; return 100; }
+  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+
+  // Elements
+  const q = id=>document.getElementById(id);
+  const duration=q('duration'), opportunity=q('opportunity'), lighting=q('lighting'), stress=q('stress'), noise=q('noise'), radiation=q('radiation'), microg=q('microg'), work=q('work');
+  const durVal=q('durVal'), oppVal=q('oppVal');
+  const tstVal=q('tstVal'), seVal=q('seVal'), remVal=q('remVal'), remlVal=q('remlVal'), alphaVal=q('alphaVal'), pvtVal=q('pvtVal'), moodVal=q('moodVal'), riskVal=q('riskVal');
+  const remBar=q('remBar'), nremBar=q('nremBar'), wasoBar=q('wasoBar');
+  const trend=document.getElementById('trend'), ctx=trend.getContext('2d');
+
+  // Animated trend draw
+  function drawTrend(tst, pvt){
+    const w=trend.width, h=trend.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(32,10); ctx.lineTo(32,h-20); ctx.lineTo(w-10,h-20); ctx.stroke();
+
+    const days = Math.min(180, Number(duration.value));
+    const dx = (w-50)/Math.max(1, days-1);
+    const path = (color, gen, jitterAmp)=>{
+      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath();
+      let yPrev=null;
+      for(let i=0;i<days;i++){
+        const x = 32 + i*dx;
+        const val = gen();
+        const y = h-30 - val;
+        if(i===0){ ctx.moveTo(x,y); } else {
+          // smooth curve
+          const cx = x - dx/2;
+          ctx.quadraticCurveTo(cx, yPrev, x, y);
+        }
+        yPrev=y;
+      }
+      ctx.stroke();
+    };
+    const scaleY1 = (v)=> (v-3.5) * ((h-50)/(9.5-3.5));
+    const scaleY2 = (v)=> (v-30) * ((h-50)/(100-30));
+    const tstGen = (()=>{ const base = clamp(tst,3.5,9.5); return ()=> scaleY1(clamp(base + (Math.random()*0.5-0.25),3.5,9.5)); })();
+    const pvtGen = (()=>{ const base = clamp(pvt,30,100); return ()=> scaleY2(clamp(base + (Math.random()*8-4),30,100)); })();
+
+    path('#7bf0ff', tstGen, 0.25);
+    path('#ffd166', pvtGen, 5);
+  }
+
+  function compute(){
+    durVal.textContent = duration.value;
+    oppVal.textContent = Number(opportunity.value).toFixed(2);
+
+    let tst = BASE_TST, eff = BASE_EFF, remFrac = BASE_REM, nremFrac = BASE_NREM, reml = BASE_REML, alpha = BASE_ALPHA;
+
+    if(microg.checked){ tst -= MICROG_TST_PENALTY; alpha = Math.min(alpha, MICROG_ALPHA); reml += -15; }
+
+    if(lighting.value==='iss'){ tst -= ISS_LIGHT_PENALTY*0.6; eff -= 0.04; }
+    else if(lighting.value==='optimized'){ tst += OPT_LIGHT_RECOVERY; eff += 0.04; }
+    else if(lighting.value==='earthlike'){ tst -= EARTHLIKE_PENALTY*0.5; }
+
+    tst -= (stressPenaltyH(stress.valueAsNumber) + (work.valueAsNumber/100)*0.3);
+    eff -= noiseEffPenalty(noise.valueAsNumber);
+
+    const R = RAD[radiation.value];
+    tst += R.tst; remFrac += R.remFrac; alpha += R.alpha; reml += R.remlShift;
+
+    eff = clamp(eff, 0.65, 0.98); tst = clamp(tst, 3.0, 9.5);
+
+    const achievable = opportunity.valueAsNumber * eff;
+    const achievedTST = Math.min(tst, achievable);
+
+    remFrac = clamp(remFrac, 0.12, 0.28);
+    nremFrac = clamp(1.0 - remFrac - (1-eff), 0.40, 0.70);
+
+    reml += stressREML(stress.valueAsNumber);
+    reml = clamp(Math.round(reml), 30, 120);
+    alpha = clamp(alpha, 0.80, 1.00);
+
+    const pvt = Math.round(pvtFromTST(achievedTST));
+
+    const shortfall = Math.max(0, opportunity.valueAsNumber - achievedTST);
+    let moodIdx = shortfall*12 + (stress.valueAsNumber/100)*25 + (noise.valueAsNumber/100)*8;
+    moodIdx = clamp(Math.round(moodIdx), 0, 100);
+    let moodLabel = 'Good'; if(moodIdx>66) moodLabel='High Fatigue'; else if(moodIdx>33) moodLabel='Moderate';
+
+    const dailyDebt = Math.max(0, 7.0 - achievedTST);
+    let risk = dailyDebt * (duration.valueAsNumber/30) * 6 + (stress.valueAsNumber/100)*20;
+    risk = clamp(Math.round(risk), 0, 100);
+    let riskLabel = 'Low'; if(risk>66) riskLabel='High'; else if(risk>33) riskLabel='Medium';
+
+    tstVal.textContent = achievedTST.toFixed(1)+' h';
+    seVal.textContent = Math.round(eff*100)+'%';
+    remVal.textContent = Math.round(remFrac*100)+'%';
+    remlVal.textContent = reml+' min';
+    alphaVal.textContent = alpha.toFixed(2)+'×';
+    pvtVal.textContent = pvt+'/100';
+    moodVal.textContent = moodLabel;
+    riskVal.textContent = riskLabel;
+
+    remBar.style.width = Math.round(remFrac*100)+'%';
+    const nremPct = Math.round(nremFrac*100);
+    nremBar.style.width = nremPct+'%';
+    const wasoPct = Math.max(0, 100 - (Math.round(remFrac*100)+nremPct));
+    wasoBar.style.width = wasoPct+'%';
+
+    drawTrend(achievedTST, pvt);
+    updateHomePreview();
+  }
+
+  [duration, opportunity, lighting, stress, noise, radiation, microg, work].forEach(e=>e && e.addEventListener('input', compute));
+  compute();
+
+  // Home preview sync
+  function updateHomePreview(){
+    const hm = {
+      tst: document.getElementById('tstVal').textContent,
+      eff: document.getElementById('seVal').textContent,
+      rem: document.getElementById('remVal').textContent,
+      alpha: document.getElementById('alphaVal').textContent
+    };
+    document.getElementById('hm_tst').textContent = hm.tst;
+    document.getElementById('hm_eff').textContent = hm.eff;
+    document.getElementById('hm_rem').textContent = hm.rem;
+    document.getElementById('hm_alpha').textContent = hm.alpha;
+  }
+
+  // Dreams analyzer
+  const THEMES = {
+    stress:['alarm','late','fail','pressure','crowd','lost','cry','panic','deadline','overload','noise','beeping'],
+    exploration:['float','orbit','module','hatch','stars','moon','mars','eva','dock','spacewalk','window','cupola'],
+    control:['pilot','drive','steer','throttle','engine','panel','joystick','manual','override','autopilot'],
+    social:['crew','call','message','family','team','meet','argue','hug','talk'],
+    threat:['fire','leak','radiation','storm','collision','meteor','debris','fall','dark','chase'],
+    comfort:['sleep','calm','quiet','music','warm','soft','safe','cozy','home']
+  };
+  function analyzeDream(text){
+    const lower = text.toLowerCase();
+    const out = { sentiment:0, themes:[], keywords:[] };
+    const pos = ['calm','safe','success','clear','solve','find','help','warm','cozy','music','light'];
+    const neg = ['lost','fail','alarm','beeping','panic','dark','cold','cry','storm','chase','leak','fire'];
+    pos.forEach(w=>{ if(lower.includes(w)) out.sentiment+=1; });
+    neg.forEach(w=>{ if(lower.includes(w)) out.sentiment-=1; });
+    for(const [k,arr] of Object.entries(THEMES)){
+      let hit=0; arr.forEach(w=>{ if(lower.includes(w)){ hit++; out.keywords.push(w);} });
+      if(hit>0) out.themes.push({theme:k, hits:hit});
+    }
+    out.sentimentLabel = out.sentiment>1?'Positive':(out.sentiment<-1?'Negative':'Mixed/Neutral');
+    out.themes.sort((a,b)=>b.hits-a.hits);
+    return out;
+  }
+  const dreamBtn = document.getElementById('analyze');
+  if(dreamBtn){
+    dreamBtn.addEventListener('click', ()=>{
+      const txt = document.getElementById('dream').value.trim();
+      if(!txt){ document.getElementById('dreamStatus').textContent='Please paste a short dream note.'; return; }
+      document.getElementById('dreamStatus').textContent='Analyzing...';
+      setTimeout(()=>{
+        const res = analyzeDream(txt);
+        document.getElementById('dreamOut').textContent = JSON.stringify(res,null,2);
+        document.getElementById('dreamStatus').textContent='Done.';
+      }, 200);
+    });
+  }
+</script>
+</body>
+</html>
